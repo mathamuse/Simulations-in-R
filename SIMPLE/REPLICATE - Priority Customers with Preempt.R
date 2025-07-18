@@ -29,7 +29,8 @@ env<- lapply(1:100,function(i){
   simmer("shop") %>%
   add_resource("counter", 1 , preemptive = TRUE) %>%
   add_generator("Customer", customer, function() rexp(1, 1/5)) %>%
-  add_generator("Priority_Customer", customer, function() rexp(1, 1/15), priority = 1)
+  add_generator("Priority_Customer", customer, function() rexp(1, 1/15), priority = 1) %>%
+  run(until = 240)
 }
 )
 ############### RUN SHOP UNTIL RUNTIME = 45 ###################################
