@@ -30,42 +30,63 @@ customer <-
 replication_no = 100
 env <- lapply(1:replication_no, function(i){
   shopB<- simmer("shop") %>%
-  add_resource("counter", queue_size = 3) %>%
+  add_resource("counter",4, queue_size = 6) %>%
   add_generator("Customer", customer,
                 function() rexp(1, 1/5)) %>%
-  run(until=240)
-   
+  run(until=40)
+  
+  
   # find all the balking customers in this shop
   balk_rate <- sum(get_mon_arrivals(shopB)$activity_time == 0)
   
   # hourly rate of balking in this shop
   hourly_balk_rate <- sum(get_mon_arrivals(shopB)$activity_time == 0)/now(shopB)*60
   
-  #return as a vector
-  c(balk_rate,hourly_balk_rate)
+  #return as a list
+  return(list(
+    environ = shopB,
+    br = balk_rate,
+    hbr = hourly_balk_rate
+  ))
   }
 )
 
 ############### OUTPUT THE Balk Rates and Hourly Balk Rates  ###################
-balker<-do.call(rbind,env)
 
-mean_balk_rate<- sum(balker[,1])/replication_no
+balker<-do.call(rbind,env)
+mean_balk_rate <- sum(as.numeric(balker[,2]))/replication_no
 paste0("Mean balk rate is : ",mean_balk_rate)
-mean_hourly_balk_rate<-sum(balker[,2])/replication_no
+mean_hourly_balk_rate<-sum(as.numeric(balker[,3]))/replication_no
 paste0("Mean Hourly balk rate is : ",mean_hourly_balk_rate)
 
 ################ OUTPUT ########################################################
 #            STORE MONITOR 
 ################ ###### ########################################################
 
-# plot the utilization 
-plot(get_mon_resources(envs), metric = "utilization")
 
-# Plot usage in steps 
+env_for_plot <- lapply(env, function(x) x$environ)
+resource_data <- get_mon_resources(env_for_plot)
+arr_data<-get_mon_arrivals(env_for_plot)
+
+# plot the utilization of the counter
+plot(resource_data, metric = "utilization")
+
 # Server refers to usage of counters 
-plot(get_mon_resources(envs), metric = "usage", items = "server")
+plot(resource_data, metric = "usage", items = "server", steps = TRUE)
 
-# plot waiting time
-plot(get_mon_arrivals(envs), metric = "waiting_time")
+# Plot cumulative average server usage over time
+# Plot server usage (individual lines for each replication)
+plot(resource_data, metric = "usage", items = "server")
+
+# Plot cumulative queue evolution over time
+# Plot queue usage (individual lines for each replication)
+p<-plot(resource_data, metric = "usage", items = "queue", steps=TRUE)
+print(p)
+
+#plot waiting time and flow time
+plot(arr_data, metric = "waiting_time")
+plot(arr_data, metric = "flow_time")
+
 
 ## geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+
