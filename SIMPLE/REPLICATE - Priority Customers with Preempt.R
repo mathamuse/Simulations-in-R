@@ -42,14 +42,14 @@ env<- lapply(1:100,function(i){
 ################ ###### ########################################################
 
 # plot the utilization 
-plot(get_mon_resources(envs), metric = "utilization")
+plot(get_mon_resources(env), metric = "utilization")
 
 # Plot usage in steps 
 # Server refers to usage of counters 
-plot(get_mon_resources(envs), metric = "usage", items = "server")
+plot(get_mon_resources(env), metric = "usage", items = "server")
 
 # plot waiting time
-plot(get_mon_arrivals(envs), metric = "waiting_time")
+plot(get_mon_arrivals(env), metric = "waiting_time")
 
 ## geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
 
